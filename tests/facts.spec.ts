@@ -1,19 +1,23 @@
 import { expect, test } from '@playwright/test';
 
-test('GET /facts returns a fact', async ({ request }) => {
+test('GET /facts returns the number of facts you ask for', async ({ request }) => {
   const response = await request.get('facts', {
     params: {
-      limit: 1,
+      limit: 3,
     },
   });
 
   expect(response.status()).toBe(200);
+  expect(response.headers()['cache-control']).toBe('no-store');
 
   const body = await response.json();
-  expect(body.data).toHaveLength(1);
-  expect(body.data[0].id).toEqual(expect.any(String));
-  expect(body.data[0].type).toBe('fact');
-  expect(body.data[0].attributes.body).toEqual(expect.any(String));
+  expect(body.data).toHaveLength(3);
+
+  for (const fact of body.data) {
+    expect(fact.id).toEqual(expect.any(String));
+    expect(fact.type).toBe('fact');
+    expect(fact.attributes.body.length).toBeGreaterThan(0);
+  }
 });
 
 test('GET /facts returns five facts when limit is above the maximum', async ({ request }) => {
