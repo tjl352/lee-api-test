@@ -90,3 +90,20 @@ test('GET /breeds/{id}/image returns 404 for an unknown id', async ({ request })
 
   expect(response.status()).toBe(404);
 });
+
+test('GET /breeds/image redirects to a breed image', async ({ request }) => {
+  const response = await request.get('breeds/image', {
+    maxRedirects: 0,
+  });
+
+  expect(response.status()).toBe(302);
+  expect(response.headers().location).toEqual(expect.any(String));
+});
+
+test('POST /breeds/image returns 404', async ({ request }) => {
+  const response = await request.post('breeds/image', {
+    maxRedirects: 0,
+  });
+
+  expect(response.status()).toBe(404);
+});
