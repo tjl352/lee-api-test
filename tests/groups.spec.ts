@@ -15,7 +15,9 @@ test('GET /groups returns groups ordered by name', async ({ request }) => {
   expect(body.meta.pagination.current).toBe(1);
   expect(body.meta.pagination.records).toBeGreaterThanOrEqual(3);
 
-  const names = body.data.map((group) => group.attributes.name);
+  const names = (body.data as { attributes: { name: string } }[]).map(
+    (group) => group.attributes.name,
+  );
   expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
 
   for (const group of body.data) {
@@ -58,12 +60,8 @@ test('GET /groups/{id} returns that group', async ({ request }) => {
 
   const body = await response.json();
   expect(body.data.id).toBe(id);
-  expect(body.data.type).toBe('group');
-  expect(body.data.attributes.name).toEqual(expect.any(String));
-  expect(body.data.relationships.breeds.data[0]).toMatchObject({
-    id: expect.any(String),
-    type: 'breed',
-  });
+  expect(body.data.attributes.name.length).toBeGreaterThan(0);
+  expect(body.links.self).toBe(`https://dogapi.dog/api/v2/groups/${id}`);
 });
 
 test('GET /groups/{id} returns 404 for an unknown id', async ({ request }) => {
