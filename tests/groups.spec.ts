@@ -1,26 +1,32 @@
 import { expect, test } from '@playwright/test';
 
-test('GET /groups returns a group', async ({ request }) => {
+test('GET /groups returns groups ordered by name', async ({ request }) => {
   const response = await request.get('groups', {
     params: {
       'page[number]': 1,
-      'page[size]': 1,
+      'page[size]': 3,
     },
   });
 
   expect(response.status()).toBe(200);
 
   const body = await response.json();
-  expect(body.data).toHaveLength(1);
-  expect(body.data[0].id).toEqual(expect.any(String));
-  expect(body.data[0].type).toBe('group');
-  expect(body.data[0].attributes.name).toEqual(expect.any(String));
+  expect(body.data).toHaveLength(3);
   expect(body.meta.pagination.current).toBe(1);
-  expect(body.meta.pagination.records).toBeGreaterThan(0);
-  expect(body.data[0].relationships.breeds.data[0]).toMatchObject({
-    id: expect.any(String),
-    type: 'breed',
-  });
+  expect(body.meta.pagination.records).toBeGreaterThanOrEqual(3);
+
+  const names = body.data.map((group) => group.attributes.name);
+  expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+
+  for (const group of body.data) {
+    expect(group.id).toEqual(expect.any(String));
+    expect(group.type).toBe('group');
+    expect(group.attributes.name.length).toBeGreaterThan(0);
+    expect(group.relationships.breeds.data[0]).toMatchObject({
+      id: expect.any(String),
+      type: 'breed',
+    });
+  }
 });
 
 test('GET /groups returns no groups past the last page', async ({ request }) => {
