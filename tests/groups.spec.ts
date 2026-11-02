@@ -36,3 +36,32 @@ test('GET /groups returns no groups past the last page', async ({ request }) => 
   const body = await response.json();
   expect(body.data).toEqual([]);
 });
+
+test('GET /groups/{id} returns that group', async ({ request }) => {
+  const list = await request.get('groups', {
+    params: {
+      'page[number]': 1,
+      'page[size]': 1,
+    },
+  });
+  const id = (await list.json()).data[0].id;
+
+  const response = await request.get(`groups/${id}`);
+
+  expect(response.status()).toBe(200);
+
+  const body = await response.json();
+  expect(body.data.id).toBe(id);
+  expect(body.data.type).toBe('group');
+  expect(body.data.attributes.name).toEqual(expect.any(String));
+  expect(body.data.relationships.breeds.data[0]).toMatchObject({
+    id: expect.any(String),
+    type: 'breed',
+  });
+});
+
+test('GET /groups/{id} returns 404 for an unknown id', async ({ request }) => {
+  const response = await request.get('groups/00000000-0000-0000-0000-000000000000');
+
+  expect(response.status()).toBe(404);
+});
